@@ -16,14 +16,14 @@ parser.add_argument("--checkpoint", default=None, help="directory with checkpoin
 parser.add_argument("--batch_size", type=int, default=1, help="number of images in batch")
 parser.add_argument("--lr", type=float, default=0.0002, help="initial learning rate for adam")
 parser.add_argument("--beta1", type=float, default=0.9, help="momentum term of adam")
-parser.add_argument("--max_epochs", type=int, help="number of training epochs")
+parser.add_argument("--max_epochs", type=int, default=1000, help="number of training epochs")
 
 # in epochs
 parser.add_argument("--save_freq", type=int, default=5, help="save model every save_freq epochs, 0 to disable")
 parser.add_argument("--summary_freq", type=int, default=5, help="update summaries every summary_freq epochs")
 parser.add_argument("--progress_freq", type=int, default=1, help="display progress every progress_freq epochs")
 parser.add_argument("--validation_freq", type=int, default=5, help="display progress every validation_freq epochs")
-parser.add_argument("--display_freq", type=int, default=10, help="write images every display_freq epochs")
+parser.add_argument("--display_freq", type=int, default=0, help="write images every display_freq epochs")
 
 a = parser.parse_args()
 if not a.output_dir:
@@ -88,10 +88,6 @@ class CNN:
             self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
             self.optimize = tf.train.AdamOptimizer(a.lr, a.beta1).minimize(self.loss)
 
-            self.global_step = tf.contrib.framework.get_or_create_global_step()
-            incr_global_step = tf.assign(self.global_step, self.global_step + 1)
-            self.train = tf.group(self.optimize, incr_global_step)
-
     def max_pool(self, bottom, name):
         return tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
 
@@ -142,9 +138,8 @@ def main():
                     return freq > 0 and ((epoch + 1) % freq == 0 or epoch == a.max_epochs - 1)
 
                 fetches = {
-                    "train": train_cnn.train,
+                    "train": train_cnn.optimize,
                     "loss": train_cnn.loss,
-                    "global_step": train_cnn.global_step,
                 }
 
                 training_loss = 0

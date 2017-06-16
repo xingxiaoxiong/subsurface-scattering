@@ -3,8 +3,6 @@ import math
 import random
 import os
 
-from bin_viewer import read_bin
-
 class Loader:
 
     def __init__(self, batch_size, split_fractions = [0.7, 0.3]):
