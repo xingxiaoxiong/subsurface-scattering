@@ -121,6 +121,7 @@ def main():
 
     logdir = a.output_dir
     with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
         print("parameter_count =", sess.run(parameter_count))
 
         if a.checkpoint is not None:
