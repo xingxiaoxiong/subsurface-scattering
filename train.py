@@ -102,8 +102,6 @@ class CNN:
 
 
 def main():
-    validation_loss = tf.Variable(0)
-
     for k, v in a._get_kwargs():
         print(k, "=", v)
 
@@ -125,8 +123,10 @@ def main():
     val_cnn.build_graph(True, False)
 
     # summaries
-    tf.summary.scalar('training loss', train_cnn.loss)
-    tf.summary.scalar('validation loss', validation_loss)
+    training_loss_summ = tf.summary.scalar('training_loss', train_cnn.loss)
+    validation_loss_summ = tf.summary.scalar('validation_loss', val_cnn.loss)
+    training_summary_op = tf.summary.merge([training_loss_summ])
+    validation_summary_op = tf.summary.merge([validation_loss_summ])
 
     with tf.name_scope("parameter_count"):
         parameter_count = tf.reduce_sum([tf.reduce_prod(tf.shape(v)) for v in tf.trainable_variables()])
@@ -165,7 +165,7 @@ def main():
                     fetches["loss"] = train_cnn.loss
 
                 if should(a.summary_freq):
-                    fetches["summary"] = sv.summary_op
+                    fetches["summary"] = training_summary_op
 
                 # if should(a.display_freq):
                 #     fetches["display"] = display_fetches
@@ -175,17 +175,13 @@ def main():
 
                 if should(a.validation_freq):
                     print('validating model')
-                    total_loss = 0
-                    for i in range(loader.nval):
-                        X, y = loader.next_batch(1)
-                        loss = sess.run(val_cnn.loss, {val_cnn.input: X, val_cnn.target: y})
-                        total_loss += loss
-                    op = tf.assign(validation_loss, total_loss)
-                    sess.run(op)
+                    X, y = loader.next_batch(1)
+                    _, validation_loss_summary_result = sess.run([val_cnn.loss, validation_summary_op], {val_cnn.input: X, val_cnn.target: y})
 
                 if should(a.summary_freq):
                     print("recording summary")
                     sv.summary_writer.add_summary(results["summary"], results["global_step"])
+                    sv.summary_writer.add_summary(validation_loss_summary_result, results["global_step"])
 
                 if should(a.progress_freq):
                     # global_step will have the correct step count if we resume from a checkpoint
