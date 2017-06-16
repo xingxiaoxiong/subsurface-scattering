@@ -72,12 +72,12 @@ class CNN:
             self.pool5 = tf.reshape(self.pool5, [self.batch_size, -1])
 
             with tf.variable_scope('fc6'):
-                self.fc6 = tf.layers.dense(self.pool5, units=4096, activation=tf.nn.relu, use_bias=True, name="fc6")
+                self.fc6 = tf.layers.dense(self.pool5, units=256, activation=tf.nn.relu, use_bias=True, name="fc6")
             if train_mode:
                 self.fc6 = tf.nn.dropout(self.fc6, keep_prob=0.5, name='dropout6')
 
             with tf.variable_scope('fc7'):
-                self.fc7 = tf.layers.dense(self.fc6, units=4096, activation=tf.nn.relu, use_bias=True, name="fc7")
+                self.fc7 = tf.layers.dense(self.fc6, units=256, activation=tf.nn.relu, use_bias=True, name="fc7")
             if train_mode:
                 self.fc7 = tf.nn.dropout(self.fc7, keep_prob=0.5, name='dropout7')
 
