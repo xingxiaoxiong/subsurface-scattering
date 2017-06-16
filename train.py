@@ -30,7 +30,8 @@ if not a.output_dir:
     if not os.path.isdir(output_prepath):
         os.makedirs(output_prepath)
     a.output_dir = os.path.join(output_prepath, datetime.datetime.now().strftime("%I_%M%p_on_%B_%d_%Y"))
-    os.makedirs(a.output_dir)
+    if not os.path.isdir(a.output_dir):
+        os.makedirs(a.output_dir)
 
 
 class CNN:
@@ -83,12 +84,12 @@ class CNN:
             with tf.variable_scope('fc8'):
                 self.output = tf.layers.dense(self.fc7, units=3, activation=tf.nn.sigmoid, use_bias=True, name="fc8")
 
-        self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
-        self.optimize = tf.train.AdamOptimizer(a.lr, a.beta1).minimize(self.loss)
+            self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
+            self.optimize = tf.train.AdamOptimizer(a.lr, a.beta1).minimize(self.loss)
 
-        global_step = tf.contrib.framework.get_or_create_global_step()
-        incr_global_step = tf.assign(global_step, global_step + 1)
-        self.train = tf.group(self.optimize, incr_global_step)
+            global_step = tf.contrib.framework.get_or_create_global_step()
+            incr_global_step = tf.assign(global_step, global_step + 1)
+            self.train = tf.group(self.optimize, incr_global_step)
 
     def max_pool(self, bottom, name):
         return tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)

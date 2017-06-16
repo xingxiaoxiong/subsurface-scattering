@@ -24,8 +24,8 @@ class Loader:
         self.split_sizes = [self.ntrain, self.nval]
         self.batch_ix = [0, 0]
 
-        self.front_lit = read_bin(os.path.join('./data', 'front_irradiance.npy'))
-        self.back_lit = read_bin(os.path.join('./data', 'back_irradiance.npy'))
+        self.front_lit = np.load(os.path.join('./data', 'front_irradiance.npy'))
+        self.back_lit = np.load(os.path.join('./data', 'back_irradiance.npy'))
         self.height = self.front_lit.shape[0]
         self.width = self.front_lit.shape[1]
         self.depth = 12

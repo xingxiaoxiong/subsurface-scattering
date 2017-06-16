@@ -16,6 +16,7 @@ def read_bin(file_path):  # return an numpy array height*width*3
         height = int.from_bytes(file.read(4), byteorder=byte_order)
 
         # count = width * height
+        print(height, width)
         data = np.zeros((height, width, 3), np.float32)
         for h in range(height):
             for w in range(width):
