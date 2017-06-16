@@ -73,12 +73,12 @@ class CNN:
             self.pool5 = tf.reshape(self.pool5, [self.batch_size, -1])
 
             with tf.variable_scope('fc6'):
-                self.fc6 = tf.layers.dense(self.pool5, units=256, activation=tf.nn.relu, use_bias=True, name="fc6")
+                self.fc6 = tf.layers.dense(self.pool5, units=128, activation=tf.nn.relu, use_bias=True, name="fc6")
             if train_mode:
                 self.fc6 = tf.nn.dropout(self.fc6, keep_prob=0.5, name='dropout6')
 
             with tf.variable_scope('fc7'):
-                self.fc7 = tf.layers.dense(self.fc6, units=256, activation=tf.nn.relu, use_bias=True, name="fc7")
+                self.fc7 = tf.layers.dense(self.fc6, units=128, activation=tf.nn.relu, use_bias=True, name="fc7")
             if train_mode:
                 self.fc7 = tf.nn.dropout(self.fc7, keep_prob=0.5, name='dropout7')
 
@@ -88,8 +88,8 @@ class CNN:
             self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
             self.optimize = tf.train.AdamOptimizer(a.lr, a.beta1).minimize(self.loss)
 
-            global_step = tf.contrib.framework.get_or_create_global_step()
-            incr_global_step = tf.assign(global_step, global_step + 1)
+            self.global_step = tf.contrib.framework.get_or_create_global_step()
+            incr_global_step = tf.assign(self.global_step, self.global_step + 1)
             self.train = tf.group(self.optimize, incr_global_step)
 
     def max_pool(self, bottom, name):
@@ -111,11 +111,6 @@ def main():
 
     # no need to load options from options.json
     loader = Loader(a.batch_size)
-    a.save_freq *= loader.nbatches
-    a.summary_freq *= loader.nbatches
-    a.progress_freq *= loader.nbatches
-    a.validation_freq *= loader.nbatches
-    a.display_freq *= loader.nbatches
 
     train_cnn = CNN(loader.batch_size, loader.height, loader.width, loader.depth)
     train_cnn.build_graph(False, True)
@@ -123,20 +118,13 @@ def main():
     val_cnn = CNN(loader.batch_size, loader.height, loader.width, loader.depth)
     val_cnn.build_graph(True, False)
 
-    # summaries
-    training_loss_summ = tf.summary.scalar('training_loss', train_cnn.loss)
-    validation_loss_summ = tf.summary.scalar('validation_loss', val_cnn.loss)
-    training_summary_op = tf.summary.merge([training_loss_summ])
-    validation_summary_op = tf.summary.merge([validation_loss_summ])
-
     with tf.name_scope("parameter_count"):
         parameter_count = tf.reduce_sum([tf.reduce_prod(tf.shape(v)) for v in tf.trainable_variables()])
 
-    saver = tf.train.Saver(max_to_keep=20)
+    saver = tf.train.Saver(max_to_keep=50)
 
     logdir = a.output_dir
-    sv = tf.train.Supervisor(logdir=logdir, save_summaries_secs=0, saver=None)
-    with sv.managed_session() as sess:
+    with tf.Session() as sess:
         print("parameter_count =", sess.run(parameter_count))
 
         if a.checkpoint is not None:
@@ -144,62 +132,51 @@ def main():
             checkpoint = tf.train.latest_checkpoint(a.checkpoint)
             saver.restore(sess, checkpoint)
 
-        max_steps = 2 ** 32
-        if a.max_epochs is not None:
-            max_steps = loader.nbatches * a.max_epochs
-
         if a.mode == 'test':
             pass
         else:
             # training
             start = time.time()
-            for step in range(max_steps):
+            for epoch in range(a.max_epochs):
                 def should(freq):
-                    return freq > 0 and ((step + 1) % freq == 0 or step == max_steps - 1)
+                    return freq > 0 and ((epoch + 1) % freq == 0 or epoch == a.max_epochs - 1)
 
                 fetches = {
                     "train": train_cnn.train,
-                    "global_step": sv.global_step,
+                    "loss": train_cnn.loss,
+                    "global_step": train_cnn.global_step,
                 }
 
-                if should(a.progress_freq):
-                    fetches["loss"] = train_cnn.loss
-
-                if should(a.summary_freq):
-                    fetches["summary"] = training_summary_op
-
-                # if should(a.display_freq):
-                #     fetches["display"] = display_fetches
-
-                X, y = loader.next_batch(0)
-                results = sess.run(fetches, {train_cnn.input: X, train_cnn.target: y})
+                training_loss = 0
+                for _ in range(loader.ntrain):
+                    X, y = loader.next_batch(0)
+                    results = sess.run(fetches, {train_cnn.input: X, train_cnn.target: y})
+                    training_loss += results['loss']
+                training_loss /= loader.ntrain
 
                 if should(a.validation_freq):
                     print('validating model')
-                    X, y = loader.next_batch(1)
-                    _, validation_loss_summary_result = sess.run([val_cnn.loss, validation_summary_op], {val_cnn.input: X, val_cnn.target: y})
+                    validation_loss = 0
+                    for _ in range(loader.nval):
+                        X, y = loader.next_batch(1)
+                        loss = sess.run(val_cnn.loss, {val_cnn.input: X, val_cnn.target: y})
+                        validation_loss += loss
+                    validation_loss /= loader.nval
 
                 if should(a.summary_freq):
                     print("recording summary")
-                    sv.summary_writer.add_summary(results["summary"], results["global_step"])
-                    sv.summary_writer.add_summary(validation_loss_summary_result, results["global_step"])
+                    with open(os.path.join(a.output_dir, 'loss_record.txt'), "a") as loss_file:
+                        loss_file.write("%s\t%s\t%s\n" % (epoch, training_loss, validation_loss))
 
                 if should(a.progress_freq):
-                    # global_step will have the correct step count if we resume from a checkpoint
-                    train_epoch = math.ceil(results["global_step"] / loader.nbatches)
-                    train_step = (results["global_step"] - 1) % loader.nbatches + 1
-                    rate = (step + 1) * a.batch_size / (time.time() - start)
-                    remaining = (max_steps - step) * a.batch_size / rate
-                    print("progress  epoch %d  step %d  image/sec %0.1f  remaining %dm" % (
-                    train_epoch, train_step, rate, remaining / 60))
-                    print("training loss", results["loss"])
+                    rate = (epoch + 1) / (time.time() - start)
+                    remaining = (a.max_epochs - 1 - epoch) / rate
+                    print("progress  epoch %d  remaining %dh" % (epoch, remaining / 3600))
+                    print("training loss", training_loss)
 
                 if should(a.save_freq):
                     print("saving model")
-                    saver.save(sess, os.path.join(a.output_dir, "model"), global_step=sv.global_step)
-
-                if sv.should_stop():
-                    break
+                    saver.save(sess, os.path.join(a.output_dir, "model"), global_step=epoch)
 
 
 if __name__ == '__main__':
