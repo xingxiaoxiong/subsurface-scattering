@@ -1,12 +1,13 @@
-import tensorflow as tf
 import argparse
 import datetime
+import json
+import math
 import os
 import time
-import math
-import json
 
-from data_loader import Loader
+import tensorflow as tf
+
+from tfmodel.data_loader import Loader
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mode", required=True, choices=["train", "test"])
