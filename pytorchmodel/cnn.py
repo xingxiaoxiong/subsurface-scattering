@@ -119,39 +119,42 @@ class CNN:
 
     def predict_step(self, tX):
         self.tX.resize_(tX.size()).copy_(tX)
-        X = Variable(self.tX)
-        return self.network.forward(X).data[0]
+        X = Variable(self.tX, volatile=True)
+        self.network.train(False)
+        color = self.network.forward(X).data[0]
+        self.network.train(True)
+        return color
 
 ##
-    def set_input(self, X, y):
-        self.tX.resize_(X.size()).copy_(X)
-        self.ty.resize_(y.size()).copy_(y)
-
-    def forward(self):
-        self.X = Variable(self.tX)
-        self.y = Variable(self.ty)
-        self.y_pred = self.network.forward(self.X)
-
-    def backward(self):
-        self.loss = self.criterion(self.y_pred, self.y)
-        self.loss.backward()
-
-    def optimize_parameters(self):
-        self.forward()
-        self.optimizer.zero_grad()
-        self.backward()
-        self.optimizer.step()
-
-    def validate(self):
-        self.network.train(False)
-        self.forward()
-        self.loss = self.criterion(self.y_pred, self.y)
-        self.network.train(True)
-
-    def predict(self, X):
-        self.tX.resize_(X.size()).copy_(X)
-        self.X = Variable(self.tX)
-        return self.network.forward(self.X).data[0]
+    # def set_input(self, X, y):
+    #     self.tX.resize_(X.size()).copy_(X)
+    #     self.ty.resize_(y.size()).copy_(y)
+    #
+    # def forward(self):
+    #     self.X = Variable(self.tX)
+    #     self.y = Variable(self.ty)
+    #     self.y_pred = self.network.forward(self.X)
+    #
+    # def backward(self):
+    #     self.loss = self.criterion(self.y_pred, self.y)
+    #     self.loss.backward()
+    #
+    # def optimize_parameters(self):
+    #     self.forward()
+    #     self.optimizer.zero_grad()
+    #     self.backward()
+    #     self.optimizer.step()
+    #
+    # def validate(self):
+    #     self.network.train(False)
+    #     self.forward()
+    #     self.loss = self.criterion(self.y_pred, self.y)
+    #     self.network.train(True)
+    #
+    # def predict(self, X):
+    #     self.tX.resize_(X.size()).copy_(X)
+    #     self.X = Variable(self.tX)
+    #     return self.network.forward(self.X).data[0]
 
     def save(self, save_path):
         torch.save(self.network.cpu().state_dict(), save_path)
