@@ -57,7 +57,8 @@ def draw(cnn, save_path):
                 X = X[None, :]
                 X = np.swapaxes(X, 1, 3)
                 X = np.swapaxes(X, 2, 3)
-                color = cnn.predict(X)
+                tX = torch.from_numpy(X)
+                color = cnn.predict(tX)
                 image[h, w] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
 
     from PIL import Image

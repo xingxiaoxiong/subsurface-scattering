@@ -85,19 +85,20 @@ class CNN:
             self.network.cuda()
         self.opt = opt
 
+        self.dtype = torch.cuda.FloatTensor if opt.gpu else torch.FloatTensor
+        self.tX = torch.zeros((opt.batch_size, 512, 512, 12)).type(self.dtype)
+        self.ty = torch.zeros((opt.batch_size, 3)).type(self.dtype)
+
         self.criterion = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=opt.lr)
 
     def set_input(self, X, y):
-        self.tX = torch.from_numpy(X)
-        self.ty = torch.from_numpy(y)
+        self.tX.resize_(X.size()).copy_(X)
+        self.ty.resize_(y.size()).copy_(y)
 
     def forward(self):
         self.X = Variable(self.tX)
         self.y = Variable(self.ty)
-        if self.opt.gpu:
-            self.X = self.X.cuda()
-            self.y = self.y.cuda()
         self.y_pred = self.network.forward(self.X)
 
     def backward(self):
@@ -117,16 +118,14 @@ class CNN:
         self.network.train(True)
 
     def predict(self, X):
-        X = Variable(torch.from_numpy(X))
-        if self.opt.gpu:
-            X = X.cuda()
-        return self.network.forward(X).data[0]
+        self.tX.resize_(X.size()).copy_(X)
+        self.X = Variable(self.tX)
+        return self.network.forward(self.X).data[0]
 
     def save(self, save_path):
         torch.save(self.network.cpu().state_dict(), save_path)
         if self.opt.gpu:
             self.network.cuda()
-
 
     def load(self, load_path):
         self.network.load_state_dict(torch.load(load_path))

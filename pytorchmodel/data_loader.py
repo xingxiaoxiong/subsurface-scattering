@@ -2,6 +2,7 @@ import numpy as np
 import math
 import random
 import os
+import torch
 
 
 class Loader:
@@ -47,8 +48,11 @@ class Loader:
         X = np.swapaxes(X, 1, 3)
         X = np.swapaxes(X, 2, 3)
 
+        tX = torch.from_numpy(X)
+        ty = torch.from_numpy(y)
+
         self.batch_ix[split_index] = (self.batch_ix[split_index] + 1) % self.split_sizes[split_index]
-        return X, y
+        return tX, ty
 
 
 if __name__ == '__main__':
