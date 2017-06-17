@@ -10,6 +10,9 @@ from bin_viewer import read_bin
 base_dir = '../data/regular'
 save_dir = './data'
 
+if not os.path.isdir(save_dir):
+    os.mkdir(save_dir)
+
 
 def generate_backlit_training_data():
     back_position_path = os.path.join(base_dir, 'buddha_backlight_back_position.bin')
@@ -45,10 +48,12 @@ def generate_backlit_training_data():
 
     export_y = np.array(export_y)
     np.save(os.path.join(save_dir, 'y.npy'), export_y)
-    print(export_y.shape)
 
     np.save(os.path.join(save_dir, 'back_irradiance.npy'), back_irradiance_data)
     np.save(os.path.join(save_dir, 'front_irradiance.npy'), front_irradiance_data)
+    np.save(os.path.join(save_dir, 'front_position.npy'), front_position_data)
+    np.save(os.path.join(save_dir, 'back_position.npy'), back_position_data)
+    np.save(os.path.join(save_dir, 'output.npy'), output_data)
 
 
 def generate_backlit_training_data_subsample():
@@ -101,10 +106,12 @@ def generate_backlit_training_data_subsample():
 
     export_y = np.array(export_y)
     np.save(os.path.join(save_dir, 'y.npy'), export_y)
-    print(export_y.shape)
 
     np.save(os.path.join(save_dir, 'back_irradiance.npy'), back_irradiance_data)
     np.save(os.path.join(save_dir, 'front_irradiance.npy'), front_irradiance_data)
+    np.save(os.path.join(save_dir, 'front_position.npy'), front_position_data)
+    np.save(os.path.join(save_dir, 'back_position.npy'), back_position_data)
+    np.save(os.path.join(save_dir, 'output.npy'), output_data)
 
     from PIL import Image
     img = Image.fromarray(mask)
