@@ -110,8 +110,8 @@ class CNN:
         self.tX.resize_(tX.size()).copy_(tX)
         self.ty.resize_(ty.size()).copy_(ty)
 
-        X = Variable(self.tX)
-        y = Variable(self.ty)
+        X = Variable(self.tX, volatile=True)
+        y = Variable(self.ty, volatile=True)
         y_pred = self.network.forward(X)
 
         self.loss = self.criterion(y_pred, y)
