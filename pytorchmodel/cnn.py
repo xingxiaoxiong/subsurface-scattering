@@ -92,6 +92,37 @@ class CNN:
         self.criterion = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=opt.lr)
 
+    def step(self, tX, ty):
+        self.tX.resize_(tX.size()).copy_(tX)
+        self.ty.resize_(ty.size()).copy_(ty)
+
+        X = Variable(self.tX)
+        y = Variable(self.ty)
+        y_pred = self.network.forward(X)
+
+        self.optimizer.zero_grad()
+        self.loss = self.criterion(y_pred, y)
+        self.loss.backward()
+        self.optimizer.step()
+
+    def validate_step(self, tX, ty):
+        self.network.train(False)
+        self.tX.resize_(tX.size()).copy_(tX)
+        self.ty.resize_(ty.size()).copy_(ty)
+
+        X = Variable(self.tX)
+        y = Variable(self.ty)
+        y_pred = self.network.forward(X)
+
+        self.loss = self.criterion(y_pred, y)
+        self.network.train(True)
+
+    def predict_step(self, tX):
+        self.tX.resize_(tX.size()).copy_(tX)
+        X = Variable(self.tX)
+        return self.network.forward(X).data[0]
+
+##
     def set_input(self, X, y):
         self.tX.resize_(X.size()).copy_(X)
         self.ty.resize_(y.size()).copy_(y)

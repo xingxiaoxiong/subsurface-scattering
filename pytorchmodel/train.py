@@ -58,7 +58,7 @@ def draw(cnn, save_path):
                 X = np.swapaxes(X, 1, 3)
                 X = np.swapaxes(X, 2, 3)
                 tX = torch.from_numpy(X)
-                color = cnn.predict(tX)
+                color = cnn.predict_step(tX)
                 image[h, w] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
 
     from PIL import Image
@@ -99,9 +99,8 @@ def main():
 
             for _ in range(loader.ntrain):
                 X, y = loader.next_batch(0)
-                model.set_input(X, y)
-                model.optimize_parameters()
-                training_loss += model.loss
+                model.step(X, y)
+                training_loss += model.loss.data[0]
 
             training_loss /= loader.ntrain
 
@@ -110,9 +109,8 @@ def main():
                 validation_loss = 0
                 for _ in range(loader.nval):
                     X, y = loader.next_batch(1)
-                    model.set_input(X, y)
-                    model.validate()
-                    validation_loss += model.loss
+                    model.validate_step(X, y)
+                    validation_loss += model.loss.data[0]
                 validation_loss /= loader.nval
 
             if should(a.summary_freq):
