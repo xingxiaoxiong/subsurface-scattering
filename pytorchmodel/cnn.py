@@ -46,36 +46,36 @@ class VGG(torch.nn.Module):
             nn.MaxPool2d(2, 2),
         )
 
-        # self.fc = nn.Sequential(
-        #     nn.Linear(131072, 3),
-        #     nn.Sigmoid()
-        # )
-
-        self.fc6 = nn.Sequential(
-            nn.Linear(131072, 128),
-            nn.ReLU()
-        )
-
-        self.fc7 = nn.Sequential(
-            nn.Linear(128, 128),
-            nn.ReLU()
-        )
-
-        self.fc8 = nn.Sequential(
-            nn.Linear(128, 3),
+        self.fc = nn.Sequential(
+            nn.Linear(131072, 3),
             nn.Sigmoid()
         )
+
+        # self.fc6 = nn.Sequential(
+        #     nn.Linear(131072, 128),
+        #     nn.ReLU()
+        # )
+        #
+        # self.fc7 = nn.Sequential(
+        #     nn.Linear(128, 128),
+        #     nn.ReLU()
+        # )
+        #
+        # self.fc8 = nn.Sequential(
+        #     nn.Linear(128, 3),
+        #     nn.Sigmoid()
+        # )
         self.dropout = nn.Dropout()
 
     def forward(self, x):
         conv_out = self.convs(x)
         conv_out = conv_out.view(conv_out.size(0), -1)
-        # return self.fc(conv_out)
-        fc6_out = self.fc6(conv_out)
-        fc6_out = self.dropout(fc6_out)
-        fc7_out = self.fc7(fc6_out)
-        fc7_out = self.dropout(fc7_out)
-        return self.fc8(fc7_out)
+        return self.fc(conv_out)
+        # fc6_out = self.fc6(conv_out)
+        # fc6_out = self.dropout(fc6_out)
+        # fc7_out = self.fc7(fc6_out)
+        # fc7_out = self.dropout(fc7_out)
+        # return self.fc8(fc7_out)
 
 
 class CNN:
