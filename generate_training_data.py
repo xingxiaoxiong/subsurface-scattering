@@ -77,14 +77,23 @@ def generate_backlit_training_data_subsample():
 
     height, width, num_channels = output_data.shape
 
+    object_mask = np.zeros((height, width, 3)).astype('int')
+    for h in range(height):
+        for w in range(width):
+            target_point_position = front_position_data[h, w]
+            if target_point_position[0] != 0.0 and target_point_position[1] != 0.0 and target_point_position[2] != 0.0:
+                object_mask[h, w, :] = 1
+
+    img = Image.fromarray(object_mask.astype('uint8') * 255)
+    img.show()
+
     step_size = 16
     anchors_h = range(0, height, step_size)
     anchors_w = range(0, width, step_size)
     sample_number = 1
-    mask = np.zeros((height, width)).astype('uint8')
 
-    export_y = []
-    count = 0
+    # generate sample_mask
+    sample_mask = np.zeros((height, width)).astype('uint8')
     for h in anchors_h:
         for w in anchors_w:
             for _ in range(sample_number):
@@ -96,14 +105,23 @@ def generate_backlit_training_data_subsample():
 
                 target_point_position = front_position_data[sample_h, sample_w]
                 if target_point_position[0] != 0.0 and target_point_position[1] != 0.0 and target_point_position[2] != 0.0:
-                    mask[sample_h, sample_w] = 255
-                    front_relative_position = front_position_data - target_point_position
-                    back_relative_position = back_position_data - target_point_position
-                    # print(front_position_data[h + 1, w], target_point_position, front_relative_position[h + 1, w])
-                    export_X = np.concatenate((front_relative_position, back_relative_position), axis=2)
-                    np.save(os.path.join(save_dir, '%05d.npy' % count), export_X)
-                    count += 1
-                    export_y.append(output_data[h, w])
+                    sample_mask[sample_h, sample_w] = 255
+
+    export_y = []
+    count = 0
+    for h in range(height):
+        for w in range(width):
+            if sample_mask[h, w] == 255:
+                target_point_position = front_position_data[h, w]
+                front_relative_position = front_position_data - target_point_position
+                back_relative_position = back_position_data - target_point_position
+                front_relative_position *= object_mask
+                back_relative_position *= object_mask
+
+                export_X = np.concatenate((front_relative_position, back_relative_position), axis=2)
+                np.save(os.path.join(save_dir, '%05d.npy' % count), export_X)
+                count += 1
+                export_y.append(output_data[h, w])
 
     export_y = np.array(export_y)
     np.save(os.path.join(save_dir, 'y.npy'), export_y)
@@ -114,8 +132,7 @@ def generate_backlit_training_data_subsample():
     np.save(os.path.join(save_dir, 'back_position.npy'), back_position_data)
     np.save(os.path.join(save_dir, 'output.npy'), output_data)
 
-    from PIL import Image
-    img = Image.fromarray(mask)
+    img = Image.fromarray(sample_mask)
     img.save(os.path.join(save_dir, 'mask.png'))
 
 
@@ -139,7 +156,7 @@ def vis_position(path):
     print(np.min(data[:, :, 2]), np.max(data[:, :, 2]))
 
 def vis_relative_position(path):
-    slice_index = 5
+    slice_index = 0
     data = np.load(path)[:, :, slice_index]
     min_val = np.min(data)
     max_val = np.max(data)
