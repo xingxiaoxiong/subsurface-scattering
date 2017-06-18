@@ -4,6 +4,7 @@ import numpy as np
 import os
 import sys
 import random
+from PIL import Image
 
 from bin_viewer import read_bin
 
@@ -87,8 +88,8 @@ def generate_backlit_training_data_subsample():
     for h in anchors_h:
         for w in anchors_w:
             for _ in range(sample_number):
-                dh = random.randint(0, 15)
-                dw = random.randint(0, 15)
+                dh = random.randint(0, step_size - 1)
+                dw = random.randint(0, step_size - 1)
 
                 sample_h = h + dh
                 sample_w = w + dw
@@ -123,8 +124,34 @@ def check_generated_data():
     data = np.load(file_path)
     print(data.shape)
 
+def vis_position(path):
+    data = np.load(path)
+    print(np.min(data[:, :, 0]), np.max(data[:, :, 0]))
+    print(np.min(data[:, :, 1]), np.max(data[:, :, 1]))
+    print(np.min(data[:, :, 2]), np.max(data[:, :, 2]))
+    data = (data + 1) * 0.5 * 255
+    data = data.astype('uint8')
+    img = Image.fromarray(data)
+    img.show()
+    img.save('x.jpg')
+    print(np.min(data[:, :, 0]), np.max(data[:, :, 0]))
+    print(np.min(data[:, :, 1]), np.max(data[:, :, 1]))
+    print(np.min(data[:, :, 2]), np.max(data[:, :, 2]))
+
+def vis_relative_position(path):
+    slice_index = 5
+    data = np.load(path)[:, :, slice_index]
+    min_val = np.min(data)
+    max_val = np.max(data)
+    data -= min_val
+    data /= (max_val - min_val)
+    data *= 255
+    data = data.astype('uint8')
+    img = Image.fromarray(data)
+    img.show()
 
 if __name__ == '__main__':
     # check_generated_data()
-    # generate_backlit_training_data()
     generate_backlit_training_data_subsample()
+    # vis_position('./data/back_position.npy')
+    # vis_relative_position('./data/00198.npy')

@@ -59,24 +59,19 @@ def render():
 
 def check_object_range():
     path = '../data/regular/buddha_backlight_front_position.bin'
-    with open(path, 'rb') as file:
-        width = int.from_bytes(file.read(4), byteorder=byte_order)
-        height = int.from_bytes(file.read(4), byteorder=byte_order)
-
-        data = np.zeros((height, width, 3))
-        for h in range(height):
-            for w in range(width):
-                r = struct.unpack('f', file.read(4))[0]
-                g = struct.unpack('f', file.read(4))[0]
-                b = struct.unpack('f', file.read(4))[0]
-                a = struct.unpack('f', file.read(4))[0]
-                data[height - 1 - h, w, 0] = r
-                data[height - 1 - h, w, 1] = g
-                data[height - 1 - h, w, 2] = b
-                print(r, g, b, a)
-
+    data = read_bin(path)
+    height, width, _ = data.shape
+    min_vals = np.array([2**32, 2**32, 2**32])
+    max_vals = np.array([-2**32, -2**32, -2**32])
+    print(min_vals, max_vals)
+    for h in range(height):
+        for w in range(width):
+            val = data[h, w]
+            min_vals = [min(val[i], min_vals[i]) for i in range(3)]
+            max_vals = [max(val[i], max_vals[i]) for i in range(3)]
+    print(min_vals, max_vals)
 
 
 if __name__ == '__main__':
-    render()
-    # check_object_range()
+    # render()
+    check_object_range()
