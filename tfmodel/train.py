@@ -49,26 +49,26 @@ class CNN:
 
             self.conv1_1 = self.conv_layer(self.input, 'conv1_1', filter_num[0])
             self.conv1_2 = self.conv_layer(self.conv1_1, 'conv1_2', filter_num[1])
-            self.pool1 = self.max_pool(self.conv1_2, 'pool1')
+            self.pool1 = self.avg_pool(self.conv1_2, 'pool1')
 
             self.conv2_1 = self.conv_layer(self.pool1, "conv2_1", filter_num[2])
             self.conv2_2 = self.conv_layer(self.conv2_1, "conv2_2", filter_num[3])
-            self.pool2 = self.max_pool(self.conv2_2, 'pool2')
+            self.pool2 = self.avg_pool(self.conv2_2, 'pool2')
 
             self.conv3_1 = self.conv_layer(self.pool2, "conv3_1", filter_num[4])
             self.conv3_2 = self.conv_layer(self.conv3_1, "conv3_2", filter_num[5])
             self.conv3_3 = self.conv_layer(self.conv3_2, "conv3_3", filter_num[6])
-            self.pool3 = self.max_pool(self.conv3_3, 'pool3')
+            self.pool3 = self.avg_pool(self.conv3_3, 'pool3')
 
             self.conv4_1 = self.conv_layer(self.pool3, "conv4_1", filter_num[7])
             self.conv4_2 = self.conv_layer(self.conv4_1, "conv4_2", filter_num[8])
             self.conv4_3 = self.conv_layer(self.conv4_2, "conv4_3", filter_num[9])
-            self.pool4 = self.max_pool(self.conv4_3, 'pool4')
+            self.pool4 = self.avg_pool(self.conv4_3, 'pool4')
 
             self.conv5_1 = self.conv_layer(self.pool4, "conv5_1", filter_num[10])
             self.conv5_2 = self.conv_layer(self.conv5_1, "conv5_2", filter_num[11])
             self.conv5_3 = self.conv_layer(self.conv5_2, "conv5_3", filter_num[12])
-            self.pool5 = self.max_pool(self.conv5_3, 'pool5')
+            self.pool5 = self.avg_pool(self.conv5_3, 'pool5')
 
             self.pool5 = tf.reshape(self.pool5, [self.batch_size, -1])
 
@@ -95,6 +95,9 @@ class CNN:
 
     def max_pool(self, bottom, name):
         return tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
+
+    def avg_pool(self, bottom, name):
+        return tf.nn.avg_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
 
     def conv_layer(self, bottom, name, filter_num):
         with tf.variable_scope(name):
