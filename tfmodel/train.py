@@ -83,9 +83,14 @@ class CNN:
                 self.fc7 = tf.nn.dropout(self.fc7, keep_prob=0.5, name='dropout7')
 
             with tf.variable_scope('fc8'):
-                self.output = tf.layers.dense(self.fc7, units=3, activation=tf.nn.sigmoid, use_bias=True, name="fc8")
+                self.output = tf.layers.dense(self.fc7, units=3, activation=None, use_bias=True, name="fc8")
+                # self.output = tf.layers.dense(self.fc7, units=3, activation=tf.nn.sigmoid, use_bias=True, name="fc8")
 
-            self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
+            self.output = tf.reshape(self.output, [-1])
+            self.target = tf.reshape(self.target, [-1])
+
+            # self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
+            self.loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.output, labels=self.target))
             self.optimize = tf.train.AdamOptimizer(a.lr, a.beta1).minimize(self.loss)
 
     def max_pool(self, bottom, name):
@@ -119,7 +124,6 @@ def main():
 
     saver = tf.train.Saver(max_to_keep=50)
 
-    logdir = a.output_dir
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         print("parameter_count =", sess.run(parameter_count))
