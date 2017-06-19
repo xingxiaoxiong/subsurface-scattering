@@ -75,7 +75,7 @@ def generate_backlit_training_data_subsample():
     output_path = os.path.join(base_dir, 'buddha_backlight_output.bin')
     output_data = read_bin(output_path)
 
-    height, width, num_channels = output_data.shape
+    height, width, _ = output_data.shape
 
     object_mask = np.zeros((height, width, 3)).astype('int')
     for h in range(height):
@@ -84,8 +84,8 @@ def generate_backlit_training_data_subsample():
             if target_point_position[0] != 0.0 and target_point_position[1] != 0.0 and target_point_position[2] != 0.0:
                 object_mask[h, w, :] = 1
 
-    img = Image.fromarray(object_mask.astype('uint8') * 255)
-    img.show()
+    # img = Image.fromarray(object_mask.astype('uint8') * 255)
+    # img.show()
 
     step_size = 16
     anchors_h = range(0, height, step_size)
@@ -133,7 +133,7 @@ def generate_backlit_training_data_subsample():
     np.save(os.path.join(save_dir, 'output.npy'), output_data)
 
     img = Image.fromarray(sample_mask)
-    img.save(os.path.join(save_dir, 'mask.png'))
+    img.save(os.path.join(save_dir, 'sample_mask.png'))
 
 
 def check_generated_data():

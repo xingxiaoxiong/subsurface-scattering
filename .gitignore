@@ -5,3 +5,4 @@ output/
 *.jpg
 misc.py
 *.png
+*.txt
