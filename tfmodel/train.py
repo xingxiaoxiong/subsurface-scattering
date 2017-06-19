@@ -86,11 +86,11 @@ class CNN:
                 self.output = tf.layers.dense(self.fc7, units=3, activation=None, use_bias=True, name="fc8")
                 # self.output = tf.layers.dense(self.fc7, units=3, activation=tf.nn.sigmoid, use_bias=True, name="fc8")
 
-            self.output = tf.reshape(self.output, [-1])
-            self.target = tf.reshape(self.target, [-1])
+            output = tf.reshape(self.output, [-1])
+            target = tf.reshape(self.target, [-1])
 
             # self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
-            self.loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.output, labels=self.target))
+            self.loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=target))
             self.optimize = tf.train.AdamOptimizer(a.lr, a.beta1).minimize(self.loss)
 
     def max_pool(self, bottom, name):
