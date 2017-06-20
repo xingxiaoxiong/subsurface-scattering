@@ -125,7 +125,7 @@ def draw(sess, model, save_path):
                 front_relative_position = front_position - position
                 back_relative_position = back_position - position
                 X = np.concatenate((front_relative_position, back_relative_position, front_lit, back_lit), axis=2)
-                X = X[None, :]
+                X = np.repeat([X], 10, axis=0)
                 color = sess.run(model.output, {model.input: X})[0]
                 image[h, w] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
 
@@ -150,7 +150,7 @@ def main():
     val_cnn = CNN(loader.batch_size, loader.height, loader.width, loader.depth)
     val_cnn.build_graph(True, False)
 
-    test_cnn = CNN(1, loader.height, loader.width, loader.depth)
+    test_cnn = CNN(loader.batch_size, loader.height, loader.width, loader.depth)
     test_cnn.build_graph(True, False)
 
     with tf.name_scope("parameter_count"):
