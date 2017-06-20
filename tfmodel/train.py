@@ -11,10 +11,10 @@ import tensorflow as tf
 from tfmodel.data_loader import Loader
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--mode", required=True, choices=["train", "test"])
+parser.add_argument("--mode", default='train', choices=["train", "test"])
 parser.add_argument("--output_dir", default=None, help="where to put output files")
 parser.add_argument("--checkpoint", default=None, help="directory with checkpoint to resume training from or use for testing")
-parser.add_argument("--batch_size", type=int, default=1, help="number of images in batch")
+parser.add_argument("--batch_size", type=int, default=2, help="number of images in batch")
 parser.add_argument("--lr", type=float, default=0.0002, help="initial learning rate for adam")
 parser.add_argument("--beta1", type=float, default=0.9, help="momentum term of adam")
 parser.add_argument("--max_epochs", type=int, default=1000, help="number of training epochs")
@@ -38,10 +38,9 @@ if not a.output_dir:
 
 class CNN:
 
-    def __init__(self, batch_size, height, width, depth):
-        self.batch_size = batch_size
-        self.input = tf.placeholder(tf.float32, [batch_size, height, width, depth], name='X_placeholder')
-        self.target = tf.placeholder(tf.float32, [batch_size, 3], name='y_placeholder')
+    def __init__(self, height, width, depth):
+        self.input = tf.placeholder(tf.float32, [None, height, width, depth], name='X_placeholder')
+        self.target = tf.placeholder(tf.float32, [None, 3], name='y_placeholder')
 
     def build_graph(self, reuse, train_mode):
         with tf.variable_scope('cnn', reuse=reuse):
@@ -71,10 +70,11 @@ class CNN:
             self.conv5_3 = self.conv_layer(self.conv5_2, "conv5_3", filter_num[12])
             self.pool5 = self.avg_pool(self.conv5_3, 'pool5')
 
-            self.pool5 = tf.reshape(self.pool5, [self.batch_size, -1])
+            self.shape = tf.shape(self.pool5)
+            fc_input = tf.reshape(self.pool5, [self.shape[0], 131072])
 
             with tf.variable_scope('fc6'):
-                self.fc6 = tf.layers.dense(self.pool5, units=128, activation=tf.nn.relu, use_bias=True, name="fc6")
+                self.fc6 = tf.layers.dense(fc_input, units=128, activation=tf.nn.relu, use_bias=True, name="fc6")
             if train_mode:
                 self.fc6 = tf.nn.dropout(self.fc6, keep_prob=0.95, name='dropout6')
 
@@ -86,6 +86,8 @@ class CNN:
             with tf.variable_scope('fc8'):
                 self.output = tf.layers.dense(self.fc7, units=3, activation=None, use_bias=True, name="fc8")
                 # self.output = tf.layers.dense(self.fc7, units=3, activation=tf.nn.sigmoid, use_bias=True, name="fc8")
+
+            self.color = tf.nn.sigmoid(self.output)
 
             output = tf.reshape(self.output, [-1])
             target = tf.reshape(self.target, [-1])
@@ -125,8 +127,8 @@ def draw(sess, model, save_path):
                 front_relative_position = front_position - position
                 back_relative_position = back_position - position
                 X = np.concatenate((front_relative_position, back_relative_position, front_lit, back_lit), axis=2)
-                X = np.repeat([X], 10, axis=0)
-                color = sess.run(model.output, {model.input: X})[0]
+                X = X[None, :]
+                color = sess.run(model.color, {model.input: X})[0]
                 image[h, w] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
 
     from PIL import Image
@@ -144,14 +146,11 @@ def main():
     # no need to load options from options.json
     loader = Loader(a.batch_size)
 
-    train_cnn = CNN(loader.batch_size, loader.height, loader.width, loader.depth)
+    train_cnn = CNN(loader.height, loader.width, loader.depth)
     train_cnn.build_graph(False, True)
 
-    val_cnn = CNN(loader.batch_size, loader.height, loader.width, loader.depth)
+    val_cnn = CNN(loader.height, loader.width, loader.depth)
     val_cnn.build_graph(True, False)
-
-    test_cnn = CNN(loader.batch_size, loader.height, loader.width, loader.depth)
-    test_cnn.build_graph(True, False)
 
     with tf.name_scope("parameter_count"):
         parameter_count = tf.reduce_sum([tf.reduce_prod(tf.shape(v)) for v in tf.trainable_variables()])
@@ -168,7 +167,7 @@ def main():
             saver.restore(sess, checkpoint)
 
         if a.mode == 'test':
-            draw(sess, test_cnn, os.path.join(a.output_dir, 'test.jpg'))
+            draw(sess, val_cnn, os.path.join(a.output_dir, 'test.jpg'))
         else:
             # training
             start = time.time()
@@ -178,7 +177,7 @@ def main():
 
                 fetches = {
                     "train": train_cnn.optimize,
-                    "loss": train_cnn.loss,
+                    "loss": train_cnn.loss
                 }
 
                 training_loss = 0
