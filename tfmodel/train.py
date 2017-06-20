@@ -4,6 +4,7 @@ import json
 import math
 import os
 import time
+import numpy as np
 
 import tensorflow as tf
 
@@ -106,6 +107,33 @@ class CNN:
             return relu
 
 
+def draw(sess, model, save_path):
+    data_dir = '../data'
+    front_position = np.load(os.path.join(data_dir, 'front_position.npy'))
+    back_position = np.load(os.path.join(data_dir, 'back_position.npy'))
+    front_lit = np.load(os.path.join(data_dir, 'front_irradiance.npy'))
+    back_lit = np.load(os.path.join(data_dir, 'back_irradiance.npy'))
+    height, width, _ = front_position.shape
+    image = np.zeros((height, width, 3)).astype('uint8')
+    for h in range(height):
+        for w in range(width):
+            print(h)
+            position = front_position[h, w]
+            if position[0] == 0.0 and position[1] == 0.0 and position[2] == 0.0:
+                image[h, w] = [0, 0, 0]
+            else:
+                front_relative_position = front_position - position
+                back_relative_position = back_position - position
+                X = np.concatenate((front_relative_position, back_relative_position, front_lit, back_lit), axis=2)
+                X = X[None, :]
+                color = sess.run(model.output, {model.input: X})[0]
+                image[h, w] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
+
+    from PIL import Image
+    img = Image.fromarray(image)
+    img.save(os.path.join(save_path))
+
+
 def main():
     for k, v in a._get_kwargs():
         print(k, "=", v)
@@ -122,6 +150,9 @@ def main():
     val_cnn = CNN(loader.batch_size, loader.height, loader.width, loader.depth)
     val_cnn.build_graph(True, False)
 
+    test_cnn = CNN(1, loader.height, loader.width, loader.depth)
+    test_cnn.build_graph(True, False)
+
     with tf.name_scope("parameter_count"):
         parameter_count = tf.reduce_sum([tf.reduce_prod(tf.shape(v)) for v in tf.trainable_variables()])
 
@@ -137,7 +168,7 @@ def main():
             saver.restore(sess, checkpoint)
 
         if a.mode == 'test':
-            pass
+            draw(sess, test_cnn, os.path.join(a.output_dir, 'test.jpg'))
         else:
             # training
             start = time.time()
