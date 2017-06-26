@@ -105,7 +105,7 @@ class CNN:
             target = tf.reshape(self.target, [-1])
 
             # self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
-            self.loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=target))
+            self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=target))
             self.optimize = tf.train.AdamOptimizer(a.lr, a.beta1).minimize(self.loss)
 
     def max_pool(self, bottom, name):
@@ -207,7 +207,7 @@ def main():
             saver.restore(sess, checkpoint)
 
         if a.mode == 'test':
-            draw(sess, val_cnn, os.path.join(a.output_dir, 'test.jpg'))
+            draw(sess, val_cnn, os.path.join(a.output_dir, 'test.jpg'), loader.depth)
         else:
             # training
             start = time.time()
@@ -253,7 +253,7 @@ def main():
 
                 if should(a.display_freq):
                     print('drawing...')
-                    draw(sess, val_cnn, os.path.join(a.output_dir, '%s.jpg' % epoch))
+                    draw(sess, val_cnn, os.path.join(a.output_dir, '%s.jpg' % epoch), loader.depth)
 
 
 if __name__ == '__main__':
