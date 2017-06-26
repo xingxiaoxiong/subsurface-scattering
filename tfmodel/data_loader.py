@@ -26,7 +26,7 @@ class Loader:
         self.back_lit = np.load(os.path.join('../data', 'back_irradiance.npy'))
         self.height = self.front_lit.shape[0]
         self.width = self.front_lit.shape[1]
-        self.depth = 12
+        self.depth = 8
 
     def next_batch(self, split_index):
         index = self.batch_ix[split_index]

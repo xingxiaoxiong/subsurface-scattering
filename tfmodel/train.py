@@ -44,48 +44,60 @@ class CNN:
 
     def build_graph(self, reuse, train_mode):
         with tf.variable_scope('cnn', reuse=reuse):
+            self.output = self.input
+
+            filter_nums = [32, 64, 128, 256, 512, 1024, 2048, 4096, 4096]
+            for i, filter_num in enumerate(filter_nums):
+                self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
+                self.output = self.avg_pool(self.output, 'pool_%s' % i)
+
+            self.shape = tf.shape(self.output)
+            self.output = tf.reshape(self.output, [self.shape[0], -1])
+
+            self.output = tf.layers.dense(self.output, units=3, activation=None, use_bias=True, name="fc0")
+
             #  VGG-16 https://gist.github.com/ksimonyan/211839e770f7b538e2d8#file-readme-md
-            filter_num = [64, 64, 128, 128, 256, 256, 256, 512, 512, 512, 512, 512, 512]
-
-            self.conv1_1 = self.conv_layer(self.input, 'conv1_1', filter_num[0])
-            self.conv1_2 = self.conv_layer(self.conv1_1, 'conv1_2', filter_num[1])
-            self.pool1 = self.avg_pool(self.conv1_2, 'pool1')
-
-            self.conv2_1 = self.conv_layer(self.pool1, "conv2_1", filter_num[2])
-            self.conv2_2 = self.conv_layer(self.conv2_1, "conv2_2", filter_num[3])
-            self.pool2 = self.avg_pool(self.conv2_2, 'pool2')
-
-            self.conv3_1 = self.conv_layer(self.pool2, "conv3_1", filter_num[4])
-            self.conv3_2 = self.conv_layer(self.conv3_1, "conv3_2", filter_num[5])
-            self.conv3_3 = self.conv_layer(self.conv3_2, "conv3_3", filter_num[6])
-            self.pool3 = self.avg_pool(self.conv3_3, 'pool3')
-
-            self.conv4_1 = self.conv_layer(self.pool3, "conv4_1", filter_num[7])
-            self.conv4_2 = self.conv_layer(self.conv4_1, "conv4_2", filter_num[8])
-            self.conv4_3 = self.conv_layer(self.conv4_2, "conv4_3", filter_num[9])
-            self.pool4 = self.avg_pool(self.conv4_3, 'pool4')
-
-            self.conv5_1 = self.conv_layer(self.pool4, "conv5_1", filter_num[10])
-            self.conv5_2 = self.conv_layer(self.conv5_1, "conv5_2", filter_num[11])
-            self.conv5_3 = self.conv_layer(self.conv5_2, "conv5_3", filter_num[12])
-            self.pool5 = self.avg_pool(self.conv5_3, 'pool5')
-
-            self.shape = tf.shape(self.pool5)
-            fc_input = tf.reshape(self.pool5, [self.shape[0], 131072])
-
-            with tf.variable_scope('fc6'):
-                self.fc6 = tf.layers.dense(fc_input, units=128, activation=tf.nn.relu, use_bias=True, name="fc6")
-            if train_mode:
-                self.fc6 = tf.nn.dropout(self.fc6, keep_prob=0.95, name='dropout6')
-
-            with tf.variable_scope('fc7'):
-                self.fc7 = tf.layers.dense(self.fc6, units=128, activation=tf.nn.relu, use_bias=True, name="fc7")
-            if train_mode:
-                self.fc7 = tf.nn.dropout(self.fc7, keep_prob=0.95, name='dropout7')
-
-            with tf.variable_scope('fc8'):
-                self.output = tf.layers.dense(self.fc7, units=3, activation=None, use_bias=True, name="fc8")
-                # self.output = tf.layers.dense(self.fc7, units=3, activation=tf.nn.sigmoid, use_bias=True, name="fc8")
+            # filter_num = [64, 64, 128, 128, 256, 256, 256, 512, 512, 512, 512, 512, 512]
+            #
+            # self.conv1_1 = self.conv_layer(self.input, 'conv1_1', filter_num[0])
+            # self.conv1_2 = self.conv_layer(self.conv1_1, 'conv1_2', filter_num[1])
+            # self.pool1 = self.avg_pool(self.conv1_2, 'pool1')
+            #
+            # self.conv2_1 = self.conv_layer(self.pool1, "conv2_1", filter_num[2])
+            # self.conv2_2 = self.conv_layer(self.conv2_1, "conv2_2", filter_num[3])
+            # self.pool2 = self.avg_pool(self.conv2_2, 'pool2')
+            #
+            # self.conv3_1 = self.conv_layer(self.pool2, "conv3_1", filter_num[4])
+            # self.conv3_2 = self.conv_layer(self.conv3_1, "conv3_2", filter_num[5])
+            # self.conv3_3 = self.conv_layer(self.conv3_2, "conv3_3", filter_num[6])
+            # self.pool3 = self.avg_pool(self.conv3_3, 'pool3')
+            #
+            # self.conv4_1 = self.conv_layer(self.pool3, "conv4_1", filter_num[7])
+            # self.conv4_2 = self.conv_layer(self.conv4_1, "conv4_2", filter_num[8])
+            # self.conv4_3 = self.conv_layer(self.conv4_2, "conv4_3", filter_num[9])
+            # self.pool4 = self.avg_pool(self.conv4_3, 'pool4')
+            #
+            # self.conv5_1 = self.conv_layer(self.pool4, "conv5_1", filter_num[10])
+            # self.conv5_2 = self.conv_layer(self.conv5_1, "conv5_2", filter_num[11])
+            # self.conv5_3 = self.conv_layer(self.conv5_2, "conv5_3", filter_num[12])
+            # self.pool5 = self.avg_pool(self.conv5_3, 'pool5')
+            #
+            # self.shape = tf.shape(self.pool5)
+            # fc_input = tf.reshape(self.pool5, [self.shape[0], 131072])
+            #
+            # with tf.variable_scope('fc6'):
+            #     self.fc6 = tf.layers.dense(fc_input, units=128, activation=tf.nn.elu, use_bias=True, name="fc6")
+            # if train_mode:
+            #     self.fc6 = tf.nn.dropout(self.fc6, keep_prob=0.95, name='dropout6')
+            #
+            # with tf.variable_scope('fc7'):
+            #     self.fc7 = tf.layers.dense(self.fc6, units=128, activation=tf.nn.elu, use_bias=True, name="fc7")
+            # if train_mode:
+            #     self.fc7 = tf.nn.dropout(self.fc7, keep_prob=0.95, name='dropout7')
+            #
+            # with tf.variable_scope('fc8'):
+            #     self.output = tf.layers.dense(self.fc7, units=3, activation=None, use_bias=True, name="fc8")
+            #     # self.output = tf.layers.dense(self.fc7, units=3, activation=tf.nn.sigmoid, use_bias=True, name="fc8")
 
             self.color = tf.nn.sigmoid(self.output)
 
@@ -105,8 +117,8 @@ class CNN:
     def conv_layer(self, bottom, name, filter_num):
         with tf.variable_scope(name):
             conv = tf.layers.conv2d(bottom, filters=filter_num, kernel_size=3, padding='same')
-            relu = tf.nn.relu(conv)
-            return relu
+            elu = tf.nn.elu(conv)
+            return elu
 
 
 def draw(sess, model, save_path):
@@ -119,7 +131,6 @@ def draw(sess, model, save_path):
     image = np.zeros((height, width, 3)).astype('uint8')
     for h in range(height):
         for w in range(width):
-            print(h)
             position = front_position[h, w]
             if position[0] == 0.0 and position[1] == 0.0 and position[2] == 0.0:
                 image[h, w] = [0, 0, 0]

@@ -118,7 +118,12 @@ def generate_backlit_training_data_subsample():
                 front_relative_position *= object_mask
                 back_relative_position *= object_mask
 
-                export_X = np.concatenate((front_relative_position, back_relative_position), axis=2)
+                front_relative_distance = np.sqrt(front_relative_position[:, :, 0] * front_relative_position[:, :, 0] + front_relative_position[:, :, 1] * front_relative_position[:, :, 1] + front_relative_position[:, :, 2] * front_relative_position[:, :, 2])
+                back_relative_distance = np.sqrt(back_relative_position[:, :, 0] * back_relative_position[:, :, 0] + back_relative_position[:, :, 1] * back_relative_position[:, :, 1] + back_relative_position[:, :, 2] * back_relative_position[:, :, 2])
+                front_relative_distance = front_relative_distance[..., None]
+                back_relative_distance = back_relative_distance[..., None]
+
+                export_X = np.concatenate((front_relative_distance, back_relative_distance), axis=2)
                 np.save(os.path.join(save_dir, '%05d.npy' % count), export_X)
                 count += 1
                 export_y.append(output_data[h, w])
@@ -169,6 +174,6 @@ def vis_relative_position(path):
 
 if __name__ == '__main__':
     # check_generated_data()
-    generate_backlit_training_data_subsample()
+    # generate_backlit_training_data_subsample()
     # vis_position('./data/back_position.npy')
-    # vis_relative_position('./data/00198.npy')
+    vis_relative_position('./data/00109.npy')
