@@ -52,7 +52,7 @@ class CNN:
                 self.output = self.avg_pool(self.output, 'pool_%s' % i)
 
             self.shape = tf.shape(self.output)
-            self.output = tf.reshape(self.output, [self.shape[0], -1])
+            self.output = tf.reshape(self.output, [self.shape[0], 4096])
 
             self.output = tf.layers.dense(self.output, units=3, activation=None, use_bias=True, name="fc0")
 
