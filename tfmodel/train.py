@@ -121,26 +121,55 @@ class CNN:
             return elu
 
 
-def draw(sess, model, save_path):
+def draw(sess, model, save_path, depth):
     data_dir = '../data'
     front_position = np.load(os.path.join(data_dir, 'front_position.npy'))
     back_position = np.load(os.path.join(data_dir, 'back_position.npy'))
     front_lit = np.load(os.path.join(data_dir, 'front_irradiance.npy'))
     back_lit = np.load(os.path.join(data_dir, 'back_irradiance.npy'))
-    height, width, _ = front_position.shape
-    image = np.zeros((height, width, 3)).astype('uint8')
+    object_mask = np.load(os.path.join(data_dir, 'object_mask.npy'))
+
+    height, width, _ = object_mask.shape
+    object_pos = []
     for h in range(height):
         for w in range(width):
-            position = front_position[h, w]
-            if position[0] == 0.0 and position[1] == 0.0 and position[2] == 0.0:
-                image[h, w] = [0, 0, 0]
-            else:
-                front_relative_position = front_position - position
-                back_relative_position = back_position - position
-                X = np.concatenate((front_relative_position, back_relative_position, front_lit, back_lit), axis=2)
-                X = X[None, :]
-                color = sess.run(model.color, {model.input: X})[0]
-                image[h, w] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
+            if object_mask[h, w, 0] == 1:
+                object_pos.append([h, w])
+
+    batch_size = 10
+    image = np.zeros((height, width, 3)).astype('uint8')
+    for start_index in range(0, len(object_pos), batch_size):
+        batch = object_pos[start_index: start_index + batch_size]
+        X = np.zeros(shape=(len(batch), height, width, depth), dtype=np.float32)
+        for i, pos in enumerate(batch):
+            position = front_position[pos[0], pos[1]]
+            front_relative_position = front_position - position
+            back_relative_position = back_position - position
+            front_relative_position *= object_mask
+            back_relative_position *= object_mask
+
+            front_relative_distance = np.sqrt(
+                front_relative_position[:, :, 0] * front_relative_position[:, :, 0] + front_relative_position[:, :,
+                                                                                      1] * front_relative_position[:, :,
+                                                                                           1] + front_relative_position[
+                                                                                                :, :,
+                                                                                                2] * front_relative_position[
+                                                                                                     :, :, 2])
+            back_relative_distance = np.sqrt(
+                back_relative_position[:, :, 0] * back_relative_position[:, :, 0] + back_relative_position[:, :,
+                                                                                    1] * back_relative_position[:, :,
+                                                                                         1] + back_relative_position[:,
+                                                                                              :,
+                                                                                              2] * back_relative_position[
+                                                                                                   :, :, 2])
+            front_relative_distance = front_relative_distance[..., None]
+            back_relative_distance = back_relative_distance[..., None]
+
+            X[i] = np.concatenate((front_relative_distance, back_relative_distance, front_lit, back_lit), axis=2)
+        colors = sess.run(model.color, {model.input: X})
+        for i, color in enumerate(colors):
+            pos = batch[i]
+            image[pos[0], pos[1]] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
 
     from PIL import Image
     img = Image.fromarray(image)
@@ -221,6 +250,10 @@ def main():
                 if should(a.save_freq):
                     print("saving model")
                     saver.save(sess, os.path.join(a.output_dir, "model"), global_step=epoch)
+
+                if should(a.display_freq):
+                    print('drawing...')
+                    draw(sess, val_cnn, os.path.join(a.output_dir, '%s.jpg' % epoch))
 
 
 if __name__ == '__main__':

@@ -136,6 +136,7 @@ def generate_backlit_training_data_subsample():
     np.save(os.path.join(save_dir, 'front_position.npy'), front_position_data)
     np.save(os.path.join(save_dir, 'back_position.npy'), back_position_data)
     np.save(os.path.join(save_dir, 'output.npy'), output_data)
+    np.save(os.path.join(save_dir, 'object_mask.npy'), object_mask)
 
     img = Image.fromarray(sample_mask)
     img.save(os.path.join(save_dir, 'sample_mask.png'))
