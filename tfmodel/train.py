@@ -108,7 +108,8 @@ class CNN:
             #     self.output = tf.layers.dense(self.fc7, units=3, activation=None, use_bias=True, name="fc8")
             #     # self.output = tf.layers.dense(self.fc7, units=3, activation=tf.nn.sigmoid, use_bias=True, name="fc8")
 
-            self.color = tf.nn.sigmoid(self.output)
+            # self.color = tf.nn.sigmoid(self.output)
+            self.color = self.output
 
             output = tf.reshape(self.output, [-1])
             target = tf.reshape(self.target, [-1])
@@ -159,7 +160,7 @@ def draw(sess, model, save_path, depth):
             if object_mask[h, w, 0] == 1:
                 object_pos.append([h, w])
 
-    batch_size = 30
+    batch_size = 20
     image = np.zeros((height, width, 3)).astype('uint8')
     for start_index in range(0, len(object_pos), batch_size):
         batch = object_pos[start_index: start_index + batch_size]
@@ -192,7 +193,10 @@ def draw(sess, model, save_path, depth):
         colors = sess.run(model.color, {model.input: X})
         for i, color in enumerate(colors):
             pos = batch[i]
-            image[pos[0], pos[1]] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
+            #image[pos[0], pos[1]] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
+            image[pos[0], pos[1]] = [max(0, min(255, int(color[0]))),
+                                     max(0, min(255, int(color[1]))),
+                                     max(0, min(255, int(color[2])))]
 
     from PIL import Image
     img = Image.fromarray(image)
