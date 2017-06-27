@@ -260,7 +260,7 @@ def main():
 
                 if should(a.summary_freq):
                     summary = sess.run(merged)
-                    writer.add_summary(summary)
+                    writer.add_summary(summary, global_step=epoch)
                     print("recording summary")
                     with open(os.path.join(a.output_dir, 'loss_record.txt'), "a") as loss_file:
                         loss_file.write("%s\t%s\t%s\n" % (epoch, training_loss, validation_loss))
