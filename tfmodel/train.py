@@ -41,18 +41,21 @@ class CNN:
     def __init__(self, height, width, depth):
         self.input = tf.placeholder(tf.float32, [None, height, width, depth], name='X_placeholder')
         self.target = tf.placeholder(tf.float32, [None, 3], name='y_placeholder')
+        self.height = height
+        self.width = width
+        self.depth = depth
 
     def build_graph(self, reuse, train_mode):
         self.train_mode = train_mode
         with tf.variable_scope('cnn', reuse=reuse):
             self.output = self.input
 
-            filter_nums = [128]
-            for i, filter_num in enumerate(filter_nums):
-                self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
+            # filter_nums = [128]
+            # for i, filter_num in enumerate(filter_nums):
+            #     self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
 
             self.shape = tf.shape(self.output)
-            self.output = tf.reshape(self.output, [self.shape[0], 128])
+            self.output = tf.reshape(self.output, [self.shape[0], self.height * self.width * self.depth])
 
             layer_sizes = [256, 128, 64, 32]
             for i, layer_size in enumerate(layer_sizes):
