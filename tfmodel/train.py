@@ -43,6 +43,7 @@ class CNN:
         self.target = tf.placeholder(tf.float32, [None, 3], name='y_placeholder')
 
     def build_graph(self, reuse, train_mode):
+        self.train_mode = train_mode
         with tf.variable_scope('cnn', reuse=reuse):
             self.output = self.input
 
@@ -117,6 +118,7 @@ class CNN:
     def conv_layer(self, bottom, name, filter_num):
         with tf.variable_scope(name):
             conv = tf.layers.conv2d(bottom, filters=filter_num, kernel_size=3, padding='same')
+            conv = tf.layers.batch_normalization(conv, training=self.train_mode)
             elu = tf.nn.elu(conv)
             return elu
 
