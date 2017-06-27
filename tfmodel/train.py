@@ -50,7 +50,6 @@ class CNN:
             filter_nums = [32, 64, 128, 256, 512, 1024, 1024, 2048, 2048]
             for i, filter_num in enumerate(filter_nums):
                 self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
-                self.output = self.avg_pool(self.output, 'pool_%s' % i)
 
             self.shape = tf.shape(self.output)
             self.output = tf.reshape(self.output, [self.shape[0], 2048])
@@ -121,12 +120,21 @@ class CNN:
     def avg_pool(self, bottom, name):
         return tf.nn.avg_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
 
+    def conv(self, batch_input, out_channels, stride):
+        in_channels = batch_input.get_shape()[3]
+        filter = tf.get_variable("filter", [4, 4, in_channels, out_channels], dtype=tf.float32,
+                                 initializer=tf.random_normal_initializer(0, 0.02))
+        # [batch, in_height, in_width, in_channels], [filter_width, filter_height, in_channels, out_channels]
+        #     => [batch, out_height, out_width, out_channels]
+        padded_input = tf.pad(batch_input, [[0, 0], [1, 1], [1, 1], [0, 0]], mode="CONSTANT")
+        conv = tf.nn.conv2d(padded_input, filter, [1, stride, stride, 1], padding="VALID")
+        return conv
+
     def conv_layer(self, bottom, name, filter_num):
         with tf.variable_scope(name):
-            conv = tf.layers.conv2d(bottom, filters=filter_num, kernel_size=3, padding='same')
-            # conv = tf.layers.batch_normalization(conv, training=self.train_mode)
+            conv = self.conv(bottom, filter_num, 2)
             elu = tf.nn.elu(conv)
-            return elu
+        return elu
 
 
 def draw(sess, model, save_path, depth):
@@ -205,9 +213,15 @@ def main():
 
     saver = tf.train.Saver(max_to_keep=50)
 
+    for var in tf.trainable_variables():
+        tf.summary.histogram(var.op.name + "/values", var)
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         print("parameter_count =", sess.run(parameter_count))
+
+        merged = tf.summary.merge_all()
+        writer = tf.summary.FileWriter(a.output_dir, sess.graph)
 
         if a.checkpoint is not None:
             print("loading model from checkpoint")
@@ -245,6 +259,8 @@ def main():
                     validation_loss /= loader.nval
 
                 if should(a.summary_freq):
+                    summary = sess.run(merged)
+                    writer.add_summary(summary)
                     print("recording summary")
                     with open(os.path.join(a.output_dir, 'loss_record.txt'), "a") as loss_file:
                         loss_file.write("%s\t%s\t%s\n" % (epoch, training_loss, validation_loss))
