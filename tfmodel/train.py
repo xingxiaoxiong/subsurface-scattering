@@ -47,15 +47,21 @@ class CNN:
         with tf.variable_scope('cnn', reuse=reuse):
             self.output = self.input
 
-            filter_nums = [32, 64, 128, 256, 512, 1024, 2048, 4096, 4096]
+            filter_nums = [32, 64, 128, 256, 512, 1024, 1024, 2048, 2048]
             for i, filter_num in enumerate(filter_nums):
                 self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
                 self.output = self.avg_pool(self.output, 'pool_%s' % i)
 
             self.shape = tf.shape(self.output)
-            self.output = tf.reshape(self.output, [self.shape[0], 4096])
+            self.output = tf.reshape(self.output, [self.shape[0], 2048])
 
-            self.output = tf.layers.dense(self.output, units=3, activation=None, use_bias=True, name="fc0")
+            layer_sizes = [512, 256, 128, 64]
+            for i, layer_size in enumerate(layer_sizes):
+                self.output = tf.layers.dense(self.output, units=layer_size, activation=tf.nn.elu, use_bias=True, name='fc_%s' % i)
+                if self.train_mode:
+                    self.output = tf.nn.dropout(self.output, keep_prob=0.95)
+
+            self.output = tf.layers.dense(self.output, units=3, activation=None, use_bias=True, name="fc_last")
 
             #  VGG-16 https://gist.github.com/ksimonyan/211839e770f7b538e2d8#file-readme-md
             # filter_num = [64, 64, 128, 128, 256, 256, 256, 512, 512, 512, 512, 512, 512]
@@ -118,7 +124,7 @@ class CNN:
     def conv_layer(self, bottom, name, filter_num):
         with tf.variable_scope(name):
             conv = tf.layers.conv2d(bottom, filters=filter_num, kernel_size=3, padding='same')
-            conv = tf.layers.batch_normalization(conv, training=self.train_mode)
+            # conv = tf.layers.batch_normalization(conv, training=self.train_mode)
             elu = tf.nn.elu(conv)
             return elu
 
@@ -138,7 +144,7 @@ def draw(sess, model, save_path, depth):
             if object_mask[h, w, 0] == 1:
                 object_pos.append([h, w])
 
-    batch_size = 10
+    batch_size = 30
     image = np.zeros((height, width, 3)).astype('uint8')
     for start_index in range(0, len(object_pos), batch_size):
         batch = object_pos[start_index: start_index + batch_size]
