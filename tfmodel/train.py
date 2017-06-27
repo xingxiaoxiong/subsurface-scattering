@@ -112,7 +112,11 @@ class CNN:
 
             # self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
             self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=target))
-            self.optimize = tf.train.AdamOptimizer(a.lr, a.beta1).minimize(self.loss)
+
+            vars = [var for var in tf.trainable_variables()]
+            self.optimizer = tf.train.AdamOptimizer(a.lr, a.beta1)
+            self.grads_and_vars = self.optimizer.compute_gradients(self.loss, var_list=vars)
+            self.train = self.optimizer.apply_gradients(self.grads_and_vars)
 
     def max_pool(self, bottom, name):
         return tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
@@ -216,6 +220,10 @@ def main():
     for var in tf.trainable_variables():
         tf.summary.histogram(var.op.name + "/values", var)
 
+    for grad, var in train_cnn.grads_and_vars:
+        tf.summary.histogram(var.op.name + "/gradients", grad)
+        
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         print("parameter_count =", sess.run(parameter_count))
@@ -238,7 +246,7 @@ def main():
                     return freq > 0 and ((epoch + 1) % freq == 0 or epoch == a.max_epochs - 1)
 
                 fetches = {
-                    "train": train_cnn.optimize,
+                    "train": train_cnn.train,
                     "loss": train_cnn.loss
                 }
 
