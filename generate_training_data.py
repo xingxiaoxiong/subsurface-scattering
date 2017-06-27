@@ -1,4 +1,4 @@
-
+import scipy.ndimage
 import struct
 import numpy as np
 import os
@@ -62,18 +62,23 @@ def generate_backlit_training_data_subsample():
 
     back_position_path = os.path.join(base_dir, 'buddha_backlight_back_position.bin')
     back_position_data = read_bin(back_position_path)
+    back_position_data = scipy.ndimage.zoom(input=back_position_data, zoom=(0.5, 0.5, 1), order=1)
 
     front_position_path = os.path.join(base_dir, 'buddha_backlight_front_position.bin')
     front_position_data = read_bin(front_position_path)
+    front_position_data = scipy.ndimage.zoom(input=front_position_data, zoom=(0.5, 0.5, 1), order=1)
 
     back_irradiance_path = os.path.join(base_dir, 'buddha_backlight_back_irradiance.bin')
     back_irradiance_data = read_bin(back_irradiance_path)
+    back_irradiance_data = scipy.ndimage.zoom(input=back_irradiance_data, zoom=(0.5, 0.5, 1), order=1)
 
     front_irradiance_path = os.path.join(base_dir, 'buddha_backlight_front_irradiance.bin')
     front_irradiance_data = read_bin(front_irradiance_path)
+    front_irradiance_data = scipy.ndimage.zoom(input=front_irradiance_data, zoom=(0.5, 0.5, 1), order=1)
 
     output_path = os.path.join(base_dir, 'buddha_backlight_output.bin')
     output_data = read_bin(output_path)
+    output_data = scipy.ndimage.zoom(input=output_data, zoom=(0.5, 0.5, 1), order=1)
 
     height, width, _ = output_data.shape
 
@@ -87,7 +92,7 @@ def generate_backlit_training_data_subsample():
     # img = Image.fromarray(object_mask.astype('uint8') * 255)
     # img.show()
 
-    step_size = 16
+    step_size = 256
     anchors_h = range(0, height, step_size)
     anchors_w = range(0, width, step_size)
     sample_number = 1
@@ -141,6 +146,11 @@ def generate_backlit_training_data_subsample():
     img = Image.fromarray(sample_mask)
     img.save(os.path.join(save_dir, 'sample_mask.png'))
 
+    # output_data *= 255
+    # output_data = output_data.astype('uint8')
+    # img = Image.fromarray(output_data)
+    # img.show()
+
 
 def check_generated_data():
     file_path = './data/00000.npy'
@@ -175,6 +185,6 @@ def vis_relative_position(path):
 
 if __name__ == '__main__':
     # check_generated_data()
-    # generate_backlit_training_data_subsample()
+    generate_backlit_training_data_subsample()
     # vis_position('./data/back_position.npy')
-    vis_relative_position('./data/00109.npy')
+    # vis_relative_position('./data/00109.npy')
