@@ -47,7 +47,7 @@ class CNN:
         with tf.variable_scope('cnn', reuse=reuse):
             self.output = self.input
 
-            filter_nums = [32, 64, 128, 256, 512, 1024, 1024, 2048, 2048]
+            filter_nums = [128, 128, 128, 256, 512, 1024, 1024, 2048, 2048]
             for i, filter_num in enumerate(filter_nums):
                 self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
 
@@ -110,7 +110,7 @@ class CNN:
             output = tf.reshape(self.output, [-1])
             target = tf.reshape(self.target, [-1])
 
-            self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.color)))
+            self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target * 255, self.output)))
             # self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=target))
 
             vars = [var for var in tf.trainable_variables()]
