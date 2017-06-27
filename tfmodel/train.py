@@ -47,14 +47,14 @@ class CNN:
         with tf.variable_scope('cnn', reuse=reuse):
             self.output = self.input
 
-            filter_nums = [128, 128, 128, 256, 512, 1024, 1024, 2048, 2048]
+            filter_nums = [128]
             for i, filter_num in enumerate(filter_nums):
                 self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
 
             self.shape = tf.shape(self.output)
-            self.output = tf.reshape(self.output, [self.shape[0], 2048])
+            self.output = tf.reshape(self.output, [self.shape[0], 128])
 
-            layer_sizes = [512, 256, 128, 64]
+            layer_sizes = [256, 128, 64, 32]
             for i, layer_size in enumerate(layer_sizes):
                 self.output = tf.layers.dense(self.output, units=layer_size, activation=tf.nn.elu, use_bias=True, name='fc_%s' % i)
                 if self.train_mode:
@@ -126,17 +126,17 @@ class CNN:
 
     def conv(self, batch_input, out_channels, stride):
         in_channels = batch_input.get_shape()[3]
-        filter = tf.get_variable("filter", [4, 4, in_channels, out_channels], dtype=tf.float32,
+        filter = tf.get_variable("filter", [512, 512, in_channels, out_channels], dtype=tf.float32,
                                  initializer=tf.random_normal_initializer(0, 0.02))
         # [batch, in_height, in_width, in_channels], [filter_width, filter_height, in_channels, out_channels]
         #     => [batch, out_height, out_width, out_channels]
-        padded_input = tf.pad(batch_input, [[0, 0], [1, 1], [1, 1], [0, 0]], mode="CONSTANT")
+        padded_input = tf.pad(batch_input, [[0, 0], [0, 0], [0, 0], [0, 0]], mode="CONSTANT")
         conv = tf.nn.conv2d(padded_input, filter, [1, stride, stride, 1], padding="VALID")
         return conv
 
     def conv_layer(self, bottom, name, filter_num):
         with tf.variable_scope(name):
-            conv = self.conv(bottom, filter_num, 2)
+            conv = self.conv(bottom, filter_num, 1)
             elu = tf.nn.elu(conv)
         return elu
 
