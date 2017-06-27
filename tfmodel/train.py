@@ -110,8 +110,8 @@ class CNN:
             output = tf.reshape(self.output, [-1])
             target = tf.reshape(self.target, [-1])
 
-            # self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
-            self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=target))
+            self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.color)))
+            # self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=target))
 
             vars = [var for var in tf.trainable_variables()]
             self.optimizer = tf.train.AdamOptimizer(a.lr, a.beta1)
@@ -222,7 +222,7 @@ def main():
 
     for grad, var in train_cnn.grads_and_vars:
         tf.summary.histogram(var.op.name + "/gradients", grad)
-        
+
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
@@ -267,7 +267,7 @@ def main():
                     validation_loss /= loader.nval
 
                 if should(a.summary_freq):
-                    summary = sess.run(merged)
+                    summary = sess.run(merged, {train_cnn.input: X, train_cnn.target: y})
                     writer.add_summary(summary, global_step=epoch)
                     print("recording summary")
                     with open(os.path.join(a.output_dir, 'loss_record.txt'), "a") as loss_file:
