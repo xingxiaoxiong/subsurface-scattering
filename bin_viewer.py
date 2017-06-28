@@ -59,12 +59,11 @@ def render():
 
 
 def check_object_range():
-    path = '../data/regular/buddha_backlight_front_position.bin'
+    path = '../data/sphere/sphere_grace_back_irradiance.bin'
     data = read_bin(path)
     height, width, _ = data.shape
     min_vals = np.array([2**32, 2**32, 2**32])
     max_vals = np.array([-2**32, -2**32, -2**32])
-    print(min_vals, max_vals)
     for h in range(height):
         for w in range(width):
             val = data[h, w]
@@ -73,6 +72,7 @@ def check_object_range():
     print(min_vals, max_vals)
 
 
+
 if __name__ == '__main__':
-    render()
-    # check_object_range()
+    # render()
+    check_object_range()

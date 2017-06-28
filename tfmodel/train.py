@@ -50,20 +50,21 @@ class CNN:
         with tf.variable_scope('cnn', reuse=reuse):
             self.output = self.input
 
-            # filter_nums = [128]
-            # for i, filter_num in enumerate(filter_nums):
-            #     self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
+            filter_nums = [64, 128, 256, 128, 64, 3]
+            for i, filter_num in enumerate(filter_nums):
+                self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
+            self.output = tf.reduce_sum(self.output, axis=[1, 2])
 
-            self.shape = tf.shape(self.output)
-            self.output = tf.reshape(self.output, [self.shape[0], self.height * self.width * self.depth])
-
-            layer_sizes = [256, 128, 64, 32]
-            for i, layer_size in enumerate(layer_sizes):
-                self.output = tf.layers.dense(self.output, units=layer_size, activation=tf.nn.elu, use_bias=True, name='fc_%s' % i)
-                if self.train_mode:
-                    self.output = tf.nn.dropout(self.output, keep_prob=0.95)
-
-            self.output = tf.layers.dense(self.output, units=3, activation=None, use_bias=True, name="fc_last")
+            # self.shape = tf.shape(self.output)
+            # self.output = tf.reshape(self.output, [self.shape[0], self.height * self.width * self.depth])
+            #
+            # layer_sizes = [256, 128, 64, 32]
+            # for i, layer_size in enumerate(layer_sizes):
+            #     self.output = tf.layers.dense(self.output, units=layer_size, activation=tf.nn.elu, use_bias=True, name='fc_%s' % i)
+            #     if self.train_mode:
+            #         self.output = tf.nn.dropout(self.output, keep_prob=0.95)
+            #
+            # self.output = tf.layers.dense(self.output, units=3, activation=None, use_bias=True, name="fc_last")
 
             #  VGG-16 https://gist.github.com/ksimonyan/211839e770f7b538e2d8#file-readme-md
             # filter_num = [64, 64, 128, 128, 256, 256, 256, 512, 512, 512, 512, 512, 512]
@@ -111,8 +112,8 @@ class CNN:
             # self.color = tf.nn.sigmoid(self.output)
             self.color = self.output
 
-            output = tf.reshape(self.output, [-1])
-            target = tf.reshape(self.target, [-1])
+            # output = tf.reshape(self.output, [-1])
+            # target = tf.reshape(self.target, [-1])
 
             self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target * 255, self.output)))
             # self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=target))
@@ -130,7 +131,7 @@ class CNN:
 
     def conv(self, batch_input, out_channels, stride):
         in_channels = batch_input.get_shape()[3]
-        filter = tf.get_variable("filter", [512, 512, in_channels, out_channels], dtype=tf.float32,
+        filter = tf.get_variable("filter", [1, 1, in_channels, out_channels], dtype=tf.float32,
                                  initializer=tf.random_normal_initializer(0, 0.02))
         # [batch, in_height, in_width, in_channels], [filter_width, filter_height, in_channels, out_channels]
         #     => [batch, out_height, out_width, out_channels]
