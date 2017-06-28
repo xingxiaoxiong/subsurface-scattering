@@ -7,7 +7,7 @@ import sys
 
 byte_order = sys.byteorder
 
-dir_path = '../data/regular'
+dir_path = '../data/sphere'
 
 
 def read_bin(file_path):  # return an numpy array height*width*3
@@ -36,25 +36,26 @@ def render():
     # (height, width, color channel)
     # bin data's (0, 0) is at lower left
 
-    # filenames = os.listdir(dir_path)
-    # for filename in filenames:
-    #     if filename.endswith('.bin'):
-    #         file_path = os.path.join(dir_path, filename)
-    #         data = read_bin(file_path)
-    #         data = data * 255
-    #         data = data.astype('uint8')
-    #         img = Image.fromarray(data)
-    #         print(filename)
-    #         img.show(filename)
-    #     break
-    filename = 'buddha_parallel_output.bin'
-    file_path = os.path.join(dir_path, filename)
-    data = read_bin(file_path)
-    data = data * 255
-    data = data.astype('uint8')
-    img = Image.fromarray(data)
-    # img.show(filename)
-    img.save('buddha_parallel_output.jpg')
+    filenames = os.listdir(dir_path)
+    for filename in filenames:
+        if filename.endswith('output.bin') or filename.endswith('irradiance.bin'):
+            file_path = os.path.join(dir_path, filename)
+            data = read_bin(file_path)
+            data = data * 255
+            data = data.astype('uint8')
+            img = Image.fromarray(data)
+            name = filename.split('.')[0]
+            save_path = os.path.join('./temp', name + '.png')
+            img.save(save_path)
+
+    # filename = 'buddha_parallel_output.bin'
+    # file_path = os.path.join(dir_path, filename)
+    # data = read_bin(file_path)
+    # data = data * 255
+    # data = data.astype('uint8')
+    # img = Image.fromarray(data)
+    # # img.show(filename)
+    # img.save('buddha_parallel_output.jpg')
 
 
 def check_object_range():
@@ -73,5 +74,5 @@ def check_object_range():
 
 
 if __name__ == '__main__':
-    # render()
-    check_object_range()
+    render()
+    # check_object_range()

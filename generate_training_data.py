@@ -146,10 +146,11 @@ def generate_backlit_training_data_subsample():
     img = Image.fromarray(sample_mask)
     img.save(os.path.join(save_dir, 'sample_mask.png'))
 
-    # output_data *= 255
-    # output_data = output_data.astype('uint8')
-    # img = Image.fromarray(output_data)
-    # img.show()
+    output_data *= 255
+    output_data = output_data.astype('uint8')
+    img = Image.fromarray(output_data)
+    img.show()
+    img.save(os.path.join(save_dir, 'output.png'))
 
 
 def check_generated_data():

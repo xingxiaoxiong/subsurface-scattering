@@ -13,7 +13,10 @@ def plot(path):
             y2.append(float(vl))
 
     plt.plot(x, y1, 'r-', x, y2, 'b--')
+    plt.xlabel('epoch')
+    plt.ylabel('error per pixel per channel')
     plt.show()
+
 
 if __name__ == '__main__':
     plot('./loss_record.txt')
