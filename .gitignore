@@ -6,3 +6,4 @@ output/
 misc.py
 *.png
 *.txt
+experiment/

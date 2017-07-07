@@ -7,8 +7,6 @@ import sys
 
 byte_order = sys.byteorder
 
-dir_path = '../data/sphere'
-
 
 def read_bin(file_path):  # return an numpy array height*width*3
     with open(file_path, 'rb') as file:
@@ -31,7 +29,7 @@ def read_bin(file_path):  # return an numpy array height*width*3
         # print(count)
     return data
 
-def render():
+def render(dir_path):
     # Image's (0, 0) is at upper left corner
     # (height, width, color channel)
     # bin data's (0, 0) is at lower left
@@ -45,7 +43,7 @@ def render():
             data = data.astype('uint8')
             img = Image.fromarray(data)
             name = filename.split('.')[0]
-            save_path = os.path.join('./temp', name + '.png')
+            save_path = os.path.join(dir_path, name + '.png')
             img.save(save_path)
 
     # filename = 'buddha_parallel_output.bin'
@@ -74,5 +72,11 @@ def check_object_range():
 
 
 if __name__ == '__main__':
-    # render()
-    check_object_range()
+    # render('../data/sphere')
+    # check_object_range()
+
+    root = '../data/blend2'
+    dirs = os.listdir(root)
+    for dir in dirs:
+        render(os.path.join(root, dir))
+
