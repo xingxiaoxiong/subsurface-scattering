@@ -50,12 +50,12 @@ class CNN:
         with tf.variable_scope('cnn', reuse=reuse):
             self.output = self.input
 
-            filter_nums = [64, 128, 256, 128, 64]
+            filter_nums = [64, 128, 256, 128, 64, 3]
             for i, filter_num in enumerate(filter_nums):
                 self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
 
-            with tf.variable_scope('conv_final'):
-                self.output = self.conv(self.output, 3, 1)
+            # with tf.variable_scope('conv_final'):
+            #     self.output = self.conv(self.output, 3, 1)
             self.output = tf.reduce_sum(self.output, axis=[1, 2])
 
             # self.shape = tf.shape(self.output)
@@ -145,8 +145,8 @@ class CNN:
     def conv_layer(self, bottom, name, filter_num):
         with tf.variable_scope(name):
             conv = self.conv(bottom, filter_num, 1)
-            elu = tf.nn.elu(conv)
-        return elu
+            relu = tf.nn.relu(conv)
+        return relu
 
 
 def draw(sess, model, save_path, depth):
