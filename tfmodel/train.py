@@ -227,11 +227,11 @@ def main():
 
     saver = tf.train.Saver(max_to_keep=50)
 
-    # for var in tf.trainable_variables():
-    #     tf.summary.histogram(var.op.name + "/values", var)
-    #
-    # for grad, var in train_cnn.grads_and_vars:
-    #     tf.summary.histogram(var.op.name + "/gradients", grad)
+    for var in tf.trainable_variables():
+        tf.summary.histogram(var.op.name + "/values", var)
+
+    for grad, var in train_cnn.grads_and_vars:
+        tf.summary.histogram(var.op.name + "/gradients", grad)
 
 
     with tf.Session() as sess:
