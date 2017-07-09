@@ -50,9 +50,12 @@ class CNN:
         with tf.variable_scope('cnn', reuse=reuse):
             self.output = self.input
 
-            filter_nums = [64, 128, 256, 128, 64, 3]
+            filter_nums = [64, 128, 256, 128, 64]
             for i, filter_num in enumerate(filter_nums):
                 self.output = self.conv_layer(self.output, 'conv_%s' % i, filter_num)
+
+            with tf.variable_scope('conv_final'):
+                self.output = self.conv(self.output, 3, 1)
             self.output = tf.reduce_sum(self.output, axis=[1, 2])
 
             # self.shape = tf.shape(self.output)
@@ -115,7 +118,7 @@ class CNN:
             # output = tf.reshape(self.output, [-1])
             # target = tf.reshape(self.target, [-1])
 
-            self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target * 255, self.output)))
+            self.loss = tf.reduce_mean(tf.square(tf.subtract(self.target, self.output)))
             # self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=target))
 
             vars = [var for var in tf.trainable_variables()]
@@ -194,14 +197,13 @@ def draw(sess, model, save_path, depth):
         colors = sess.run(model.color, {model.input: X})
         for i, color in enumerate(colors):
             pos = batch[i]
-            #image[pos[0], pos[1]] = [int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)]
-            image[pos[0], pos[1]] = [max(0, min(255, int(color[0]))),
-                                     max(0, min(255, int(color[1]))),
-                                     max(0, min(255, int(color[2])))]
+            image[pos[0], pos[1]] = color
 
-    from PIL import Image
-    img = Image.fromarray(image)
-    img.save(os.path.join(save_path))
+    np.save(save_path, image)
+
+    # from PIL import Image
+    # img = Image.fromarray(image)
+    # img.save(os.path.join(save_path))
 
 
 def main():
