@@ -165,7 +165,7 @@ def draw(sess, model, save_path, depth):
                 object_pos.append([h, w])
 
     batch_size = 20
-    image = np.zeros((height, width, 3)).astype('uint8')
+    image = np.zeros((height, width, 3))
     for start_index in range(0, len(object_pos), batch_size):
         batch = object_pos[start_index: start_index + batch_size]
         X = np.zeros(shape=(len(batch), height, width, depth), dtype=np.float32)
