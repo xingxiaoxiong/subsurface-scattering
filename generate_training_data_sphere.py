@@ -8,75 +8,33 @@ from PIL import Image
 
 from bin_viewer import read_bin
 
-base_dir = '../data/regular'
 save_dir = './data'
 
 if not os.path.isdir(save_dir):
     os.mkdir(save_dir)
 
-
-def generate_backlit_training_data():
-    back_position_path = os.path.join(base_dir, 'buddha_backlight_back_position.bin')
-    back_position_data = read_bin(back_position_path)
-
-    front_position_path = os.path.join(base_dir, 'buddha_backlight_front_position.bin')
-    front_position_data = read_bin(front_position_path)
-
-    back_irradiance_path = os.path.join(base_dir, 'buddha_backlight_back_irradiance.bin')
-    back_irradiance_data = read_bin(back_irradiance_path)
-
-    front_irradiance_path = os.path.join(base_dir, 'buddha_backlight_front_irradiance.bin')
-    front_irradiance_data = read_bin(front_irradiance_path)
-
-    output_path = os.path.join(base_dir, 'buddha_backlight_output.bin')
-    output_data = read_bin(output_path)
-
-    height, width, num_channels = output_data.shape
-
-    export_y = []
-    count = 0
-    for h in range(height):
-        for w in range(width):
-            target_point_position = front_position_data[h, w]
-            if target_point_position[0] != 0.0 and target_point_position[1] != 0.0 and target_point_position[2] != 0.0:
-                front_relative_position = front_position_data - target_point_position
-                back_relative_position = back_position_data - target_point_position
-                # print(front_position_data[h + 1, w], target_point_position, front_relative_position[h + 1, w])
-                export_X = np.concatenate((front_relative_position, back_relative_position), axis=2)
-                np.save(os.path.join(save_dir, '%04d.npy' % count), export_X)
-                count += 1
-                export_y.append(output_data[h, w])
-
-    export_y = np.array(export_y)
-    np.save(os.path.join(save_dir, 'y.npy'), export_y)
-
-    np.save(os.path.join(save_dir, 'back_irradiance.npy'), back_irradiance_data)
-    np.save(os.path.join(save_dir, 'front_irradiance.npy'), front_irradiance_data)
-    np.save(os.path.join(save_dir, 'front_position.npy'), front_position_data)
-    np.save(os.path.join(save_dir, 'back_position.npy'), back_position_data)
-    np.save(os.path.join(save_dir, 'output.npy'), output_data)
+random.seed(1)
 
 
-def generate_backlit_training_data_subsample():
-    random.seed(1)
+def generate_data(data_dir, count, export_y):
 
-    back_position_path = os.path.join(base_dir, 'buddha_backlight_back_position.bin')
+    back_position_path = os.path.join(data_dir, 'sphere_up_back_position.bin')
     back_position_data = read_bin(back_position_path)
     back_position_data = scipy.ndimage.zoom(input=back_position_data, zoom=(0.5, 0.5, 1), order=1)
 
-    front_position_path = os.path.join(base_dir, 'buddha_backlight_front_position.bin')
+    front_position_path = os.path.join(data_dir, 'sphere_up_front_position.bin')
     front_position_data = read_bin(front_position_path)
     front_position_data = scipy.ndimage.zoom(input=front_position_data, zoom=(0.5, 0.5, 1), order=1)
 
-    back_irradiance_path = os.path.join(base_dir, 'buddha_backlight_back_irradiance.bin')
+    back_irradiance_path = os.path.join(data_dir, 'sphere_up_back_irradiance.bin')
     back_irradiance_data = read_bin(back_irradiance_path)
     back_irradiance_data = scipy.ndimage.zoom(input=back_irradiance_data, zoom=(0.5, 0.5, 1), order=1)
 
-    front_irradiance_path = os.path.join(base_dir, 'buddha_backlight_front_irradiance.bin')
+    front_irradiance_path = os.path.join(data_dir, 'sphere_up_front_irradiance.bin')
     front_irradiance_data = read_bin(front_irradiance_path)
     front_irradiance_data = scipy.ndimage.zoom(input=front_irradiance_data, zoom=(0.5, 0.5, 1), order=1)
 
-    output_path = os.path.join(base_dir, 'buddha_backlight_output.bin')
+    output_path = os.path.join(data_dir, 'sphere_up_output.bin')
     output_data = read_bin(output_path)
     output_data = scipy.ndimage.zoom(input=output_data, zoom=(0.5, 0.5, 1), order=1)
 
@@ -112,8 +70,6 @@ def generate_backlit_training_data_subsample():
                 if target_point_position[0] != 0.0 and target_point_position[1] != 0.0 and target_point_position[2] != 0.0:
                     sample_mask[sample_h, sample_w] = 255
 
-    export_y = []
-    count = 0
     for h in range(height):
         for w in range(width):
             if sample_mask[h, w] == 255:
@@ -129,28 +85,22 @@ def generate_backlit_training_data_subsample():
                 back_relative_distance = back_relative_distance[..., None]
 
                 export_X = np.concatenate((front_relative_distance, back_relative_distance), axis=2)
-                np.save(os.path.join(save_dir, '%05d.npy' % count), export_X)
+                np.save(os.path.join(save_dir, '%07d.npy' % count), export_X)
                 count += 1
                 export_y.append(output_data[h, w])
 
-    export_y = np.array(export_y)
-    np.save(os.path.join(save_dir, 'y.npy'), export_y)
+    if data_dir[-3:] == '005':
+        np.save(os.path.join(save_dir, 'back_irradiance.npy'), back_irradiance_data)
+        np.save(os.path.join(save_dir, 'front_irradiance.npy'), front_irradiance_data)
+        np.save(os.path.join(save_dir, 'front_position.npy'), front_position_data)
+        np.save(os.path.join(save_dir, 'back_position.npy'), back_position_data)
+        np.save(os.path.join(save_dir, 'output.npy'), output_data)
+        np.save(os.path.join(save_dir, 'object_mask.npy'), object_mask)
 
-    np.save(os.path.join(save_dir, 'back_irradiance.npy'), back_irradiance_data)
-    np.save(os.path.join(save_dir, 'front_irradiance.npy'), front_irradiance_data)
-    np.save(os.path.join(save_dir, 'front_position.npy'), front_position_data)
-    np.save(os.path.join(save_dir, 'back_position.npy'), back_position_data)
-    np.save(os.path.join(save_dir, 'output.npy'), output_data)
-    np.save(os.path.join(save_dir, 'object_mask.npy'), object_mask)
+        img = Image.fromarray(sample_mask)
+        img.save(os.path.join(save_dir, 'sample_mask.png'))
+    return count, export_y
 
-    img = Image.fromarray(sample_mask)
-    img.save(os.path.join(save_dir, 'sample_mask.png'))
-
-    output_data *= 255
-    output_data = output_data.astype('uint8')
-    img = Image.fromarray(output_data)
-    img.show()
-    img.save(os.path.join(save_dir, 'output.png'))
 
 
 def check_generated_data():
@@ -184,8 +134,23 @@ def vis_relative_position(path):
     img = Image.fromarray(data)
     img.show()
 
+
+def start_generating(base_dir):
+    dirnames = set(os.listdir(base_dir))
+    # training_dirs = {'010', '008', '006', '004', '002', '000'}
+    training_dirs = dirnames
+    validation_dirs = dirnames - training_dirs
+    count = 0
+    y = []
+    for dir_name in training_dirs:
+        data_path = os.path.join(base_dir, dir_name)
+        count, y = generate_data(data_path, count, y)
+    y = np.array(y)
+    np.save(os.path.join(save_dir, 'y.npy'), y)
+
+
 if __name__ == '__main__':
     # check_generated_data()
-    generate_backlit_training_data_subsample()
+    start_generating('../data/blend2')
     # vis_position('./data/back_position.npy')
     # vis_relative_position('./data/00109.npy')
