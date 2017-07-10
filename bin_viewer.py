@@ -39,7 +39,7 @@ def render(dir_path):
         if filename.endswith('output.bin') or filename.endswith('irradiance.bin'):
             file_path = os.path.join(dir_path, filename)
             data = read_bin(file_path)
-            data = data * 255
+            data = data * 10
             data = data.astype('uint8')
             img = Image.fromarray(data)
             name = filename.split('.')[0]
@@ -70,21 +70,12 @@ def check_object_range():
     print(min_vals, max_vals)
 
 
-def npy_render(path):
-    data = np.load(path)
-    data = data * 255.0
-    data = data.astype('uint8')
-    img = Image.fromarray(data)
-    img.show()
-
-
 if __name__ == '__main__':
     # render('../data/sphere')
     # check_object_range()
 
-    # root = '../data/blend2'
-    # dirs = os.listdir(root)
-    # for dir in dirs:
-    #     render(os.path.join(root, dir))
-    npy_render('./temp/9.jpg.npy')
+    root = '../data/blend2'
+    dirs = os.listdir(root)
+    for dir in dirs:
+        render(os.path.join(root, dir))
 
