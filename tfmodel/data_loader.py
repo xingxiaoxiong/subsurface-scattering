@@ -38,7 +38,7 @@ class Loader:
 
         X = np.zeros(shape=(self.batch_size, self.height, self.width, self.depth), dtype=np.float32)
         for order, i in enumerate(indices):
-            file_path = os.path.join('../data', '%05d.npy' % i)
+            file_path = os.path.join('../data', '%07d.npy' % i)
             data = np.load(file_path)
             data = np.concatenate((data, self.front_lit, self.back_lit), axis=2)
             X[order] = data
