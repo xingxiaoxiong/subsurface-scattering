@@ -56,10 +56,10 @@ def compare_loss_across_lr(root_dir):
 
 def npy_render(path):
     data = np.load(path)
-    data = data * 255.0
+    data = data * 10.0
     data = data.astype('uint8')
     img = Image.fromarray(data)
-    img.save(path[:-4])
+    img.save(path[:-4] + '.jpg')
 
 
 def render_all_npy(root_dir):
@@ -140,7 +140,7 @@ class Table:
             lr = options['lr']
             dict = {'learning_rate': lr,
                         'loss': os.path.join(dir_name, 'loss.jpg'),
-                        'result': os.path.join(dir_name, '49.jpg')}
+                        'result': os.path.join(dir_name, '99.jpg.jpg')}
             lrs.append(dict)
         lrs = sorted(lrs, key=lambda tup: tup['learning_rate'])
         self.append_index(lrs)
@@ -151,6 +151,6 @@ if __name__ == '__main__':
     # plot_experiment('experiment/experiment3')
     # compare_loss_across_lr('experiment/experiment3')
 
-    # npy_render('./temp/39.jpg.npy')
-    # render_all_npy('experiment/experiment5')
-    Table('experiment/experiment5')
+    npy_render('./temp/output.npy')
+    # render_all_npy('temp')
+    # Table('experiment/experiment6')
